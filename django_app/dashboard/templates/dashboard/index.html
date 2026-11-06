@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aula Dashboard</title>
+    <style>
+      :root {
+        --bg: #edf2f7;
+        --panel: #f5f7fb;
+        --surface: #ffffff;
+        --surface-2: #f2f5f9;
+        --line: #dfe7f1;
+        --line-strong: #c8d4e1;
+        --text: #1d2b3a;
+        --muted: #6d7f9a;
+        --muted-2: #8a96a7;
+        --blue: #1f7fe8;
+        --blue-dark: #0a5ab5;
+        --green: #26b36b;
+        --green-soft: #dff8ea;
+        --amber: #e9b96d;
+        --red: #e56d5b;
+        --red-soft: #fee3dc;
+        --shadow: 0 8px 25px rgba(29, 43, 58, 0.08);
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; min-height: 100%; font-family: "Segoe UI", Arial, sans-serif; background: var(--bg); color: var(--text); }
+      body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 45px 30px; }
+      .desktop-shell { position: relative; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #dfeaf8, #eaf2ff 50%, #cddbe8); overflow: hidden; }
+      .desktop-bg { position: absolute; inset: 0; background: radial-gradient(circle at 20% 15%, rgba(255,255,255,0.5), transparent 18%), radial-gradient(circle at 80% 10%, rgba(80,125,255,0.18), transparent 22%), linear-gradient(135deg, rgba(15,53,94,0.08), rgba(255,255,255,0)); }
+      .desktop-launcher { position: absolute; left: 40px; top: 42px; z-index: 2; }
+      .app-launcher { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 86px; background: transparent; border: none; color: white; cursor: pointer; text-shadow: 0 2px 5px rgba(0,0,0,.3); }
+      .app-icon { width: 46px; height: 46px; border-radius: 12px; background: linear-gradient(135deg, #2f95ff, #0b74d6); border: 2px solid rgba(255,255,255,0.7); position: relative; box-shadow: 0 12px 18px rgba(13, 78, 148, 0.28); }
+      .app-icon::before { content: ""; position: absolute; inset: 11px 9px 11px 9px; background: white; border-radius: 7px 14px 7px 14px; }
+      .app-label { font-size: 13px; font-weight: 600; }
+      .app-window { position: relative; z-index: 3; display: flex; flex-direction: column; width: min(1280px, calc(100vw - 120px)); height: min(920px, calc(100vh - 80px)); background: var(--surface); border: 1px solid rgba(147, 170, 201, 0.8); border-radius: 18px; box-shadow: 0 28px 65px rgba(23, 35, 56, 0.25); overflow: hidden; }
+      .titlebar { height: 38px; background: linear-gradient(180deg, #f4f7fb, #eef3f9); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 12px 0 14px; }
+      .titlebar-left { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--text); }
+      .window-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+      .window-dot.blue { background: #2f95ff; }
+      .window-title { font-size: 13px; }
+      .titlebar-actions { display: flex; align-items: center; gap: 8px; }
+      .window-btn { width: 18px; height: 18px; border: 1px solid #c8d6e9; border-radius: 5px; background: #f9fbff; color: #536c8c; font-size: 10px; display: grid; place-items: center; padding: 0; cursor: pointer; }
+      .window-btn.close { color: #d04d4d; }
+      .app-shell { width: 100%; height: calc(100% - 38px); background: var(--surface); border: 1px solid #dde5f0; display: flex; }
+      .sidebar { width: 220px; background: #f4f7fa; border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+      .brand { padding: 18px 18px 12px; display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
+      .brand-badge { width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, #0b7ef3, #0d6ed3); position: relative; }
+      .brand-badge::before { content: ""; position: absolute; inset: 7px 6px 7px 6px; background: white; border-radius: 4px 12px 4px 12px; }
+      .profile-box { margin: 6px 10px 10px; padding: 10px 8px; display: flex; align-items: center; gap: 10px; border-radius: 10px; }
+      .profile-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #e8ecf5, #d7e5f9); border: 1px solid #c7d9f3; position: relative; }
+      .profile-avatar::before { content: ""; position: absolute; width: 11px; height: 11px; background: #9aa8b8; border-radius: 50%; left: 50%; top: 7px; transform: translateX(-50%); }
+      .profile-avatar::after { content: ""; position: absolute; width: 16px; height: 9px; background: #9aa8b8; border-radius: 10px 10px 6px 6px; left: 50%; bottom: 5px; transform: translateX(-50%); }
+      .profile-name { font-size: 13px; font-weight: 600; }
+      .profile-role { font-size: 11px; color: var(--muted-2); }
+      .nav { padding: 8px 10px 0; display: flex; flex-direction: column; gap: 2px; }
+      .nav-section { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #7c8fa6; padding: 12px 10px 8px; font-weight: 700; }
+      .nav-item { display: flex; align-items: center; padding: 9px 10px; border-radius: 8px; gap: 10px; color: var(--text); font-size: 13px; cursor: pointer; }
+      .nav-item .icon { width: 12px; height: 12px; border-radius: 3px; border: 1.5px solid #8290a7; position: relative; opacity: 0.8; }
+      .nav-item.active { background: #eaf4ff; border: 1px solid #bfe1ff; color: var(--blue-dark); font-weight: 600; }
+      .nav-item.active .icon { border-color: var(--blue-dark); background: rgba(15, 108, 202, 0.08); }
+      .divider { margin: 14px 12px 10px; border-top: 1px solid var(--line); }
+      .sidebar-foot { margin-top: auto; border-top: 1px solid var(--line); padding: 12px 14px 20px; }
+      .help-box { display: flex; align-items: center; gap: 8px; padding: 8px 8px 0; color: #5f738b; font-size: 12px; }
+      .help-box .badge { width: 26px; height: 26px; border-radius: 50%; background: #ecf2fb; border: 1px solid #d5e0ee; position: relative; }
+      .help-box .badge::before { content: "?"; position: absolute; inset: 0; display: grid; place-items: center; font-weight: 700; color: #5573a7; }
+      .content { flex: 1; display: flex; flex-direction: column; background: var(--bg); }
+      .topbar { background: rgba(255,255,255,0.82); backdrop-filter: blur(3px); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 12px 18px; }
+      .crumbs { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
+      .crumbs .crumb { display: flex; align-items: center; gap: 8px; }
+      .crumbs .dot { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--line-strong); position: relative; }
+      .crumbs .dot::before { content: ""; position: absolute; inset: 4px; background: #c2cbe0; border-radius: 50%; }
+      .crumbs .separator { color: #a4afbf; }
+      .header-actions { display: flex; align-items: center; gap: 12px; }
+      .pill { border: 1px solid #c8d7eb; background: #f7faff; color: var(--blue-dark); border-radius: 6px; padding: 7px 10px; font-size: 11px; display: inline-flex; align-items: center; gap: 6px; }
+      .pill strong { font-weight: 700; }
+      .btn { border: 0; border-radius: 8px; padding: 9px 14px; font-size: 12px; font-weight: 600; color: white; background: linear-gradient(180deg, #2d96f8, #0d78d8); box-shadow: inset 0 -2px rgba(0, 0, 0, 0.05); cursor: pointer; }
+      .main { padding: 18px 20px 18px 20px; overflow: auto; }
+      .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+      .page-header h1 { margin: 0; font-size: 18px; line-height: 1.3; }
+      .page-header p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+      .toolbar { margin-top: 12px; display: flex; align-items: center; gap: 12px; background: #f8fafc; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+      .select-field { position: relative; display: inline-flex; align-items: center; background: white; border: 1px solid var(--line-strong); border-radius: 7px; height: 34px; padding: 0 12px; color: var(--text); font-size: 12px; }
+      .select-field select { border: none; background: transparent; color: var(--text); font: inherit; outline: none; appearance: none; padding-right: 18px; cursor: pointer; }
+      .select-field::after { content: "▾"; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--muted-2); font-size: 12px; }
+      .toolbar .spacer { flex: 1; }
+      .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(200px, 1fr)); gap: 12px; margin-top: 18px; }
+      .stat-card { background: #ffffff; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px 10px; cursor: pointer; transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; }
+      .stat-card:hover { border-color: #bfd9f8; box-shadow: 0 6px 18px rgba(31, 127, 232, 0.08); }
+      .stat-card.selected { border-color: var(--blue); box-shadow: inset 0 0 0 1px rgba(31, 127, 232, 0.25); }
+      .stat-head { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+      .stat-wrap { display: flex; align-items: end; gap: 8px; margin-bottom: 6px; }
+      .number { font-size: 32px; line-height: 1; font-weight: 600; letter-spacing: -0.04em; }
+      .delta { font-size: 12px; padding: 2px 6px; border-radius: 5px; display: inline-flex; align-items: center; gap: 7px; }
+      .delta.up { background: var(--green-soft); color: var(--green); }
+      .delta.down { background: var(--red-soft); color: var(--red); }
+      .stat-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); border-top: 1px solid #edf0f6; padding-top: 8px; }
+      .mini-chip { width: 12px; height: 12px; border-radius: 3px; display: inline-block; background: #dadfe8; }
+      .mini-chip.blue { background: #2e8ff8; }
+      .mini-chip.green { background: #40c287; }
+      .mini-chip.orange { background: #f0b86a; }
+      .mini-chip.red { background: #ef7d6e; }
+      .notice { margin-top: 14px; display: flex; align-items: center; gap: 10px; background: #f9fbff; border: 1px solid #dfeaf8; border-radius: 8px; padding: 10px 12px; color: #627c9e; font-size: 12px; }
+      .notice .icon { width: 18px; height: 18px; border-radius: 50%; background: #edf5ff; border: 1px solid #d1e5ff; position: relative; }
+      .notice .icon::before { content: "i"; position: absolute; inset: 0; display: grid; place-items: center; color: #5087d0; font-weight: 700; font-size: 12px; }
+      .insights { margin-top: 16px; display: grid; grid-template-columns: 1.6fr 0.9fr; gap: 12px; }
+      .panel { background: #ffffff; border: 1px solid var(--line); border-radius: 10px; padding: 14px 14px 10px; }
+      .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+      .panel-header .title { font-weight: 600; font-size: 14px; }
+      .tag { border: 1px solid #d8e1ef; background: #f5f8fe; color: #59769b; border-radius: 999px; padding: 4px 8px; display: inline-flex; align-items: center; gap: 6px; font-size: 10px; }
+      .chart-box { display: flex; gap: 18px; }
+      .chart-svg { flex: 1; height: 200px; }
+      .chart-y { width: 38px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; color: var(--muted-2); font-size: 10px; padding: 10px 0 13px; }
+      .chart-x { display: flex; justify-content: space-between; margin-left: 38px; margin-top: -8px; color: var(--muted-2); font-size: 10px; }
+      .bar-panel { padding-top: 4px; }
+      .bars { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
+      .bar-row { display: grid; grid-template-columns: 30px 1fr 32px; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); }
+      .bar-track { position: relative; height: 12px; background: #eef2f8; border-radius: 999px; overflow: hidden; }
+      .bar-track > span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; }
+      .blue-bar { background: linear-gradient(90deg, #2c8df5, #2d78d9); }
+      .amber-bar { background: linear-gradient(90deg, #f0c57d, #dfa95d); }
+      .table-wrap { margin-top: 18px; background: #ffffff; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+      .course-row { cursor: pointer; transition: background 0.2s ease; }
+      .course-row.selected { background: #eef6ff; }
+      .course-row:hover { background: #f7faff; }
+      .table-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--line); background: #f9fbff; }
+      .table-head h3 { margin: 0; font-size: 14px; }
+      .toggle-group { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; }
+      .alert-checkbox { width: 18px; height: 18px; accent-color: var(--blue); cursor: pointer; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; padding: 12px 14px; font-size: 12px; border-bottom: 1px solid #edf2f8; }
+      th { font-weight: 600; color: #5d728d; background: #fbfcff; }
+      .course-name { font-weight: 600; color: var(--text); }
+      .progress { height: 8px; background: #edf1f7; border-radius: 999px; position: relative; overflow: hidden; }
+      .progress > span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: inherit; }
+      .progress.green > span { background: linear-gradient(90deg, #32bb76, #31a96d); }
+      .progress.orange > span { background: linear-gradient(90deg, #f0bf6f, #dba055); }
+      .progress.red > span { background: linear-gradient(90deg, #eb8a7d, #d86d5d); }
+      .status-pill { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-size: 10px; padding: 4px 8px; border: 1px solid #dfeaf8; background: #f7fafc; color: #677d97; }
+      .status-pill.warning { background: #fff5e8; color: #b77b1f; border-color: #f0d7ab; }
+      .status-pill.safe { background: #ebfff4; color: #1f8f5e; border-color: #c1e9d0; }
+      .table-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 14px 12px; font-size: 11px; color: var(--muted); }
+      .table-foot .info { display: flex; align-items: center; gap: 8px; }
+      .table-foot .dot { width: 8px; height: 8px; border-radius: 50%; background: #adbdcf; }
+      .table-foot .value { color: var(--text); font-weight: 600; }
+      @media (max-width: 1100px) { .app-shell { width: 100%; height: auto; min-height: 100vh; } .stats-grid { grid-template-columns: repeat(2, minmax(180px, 1fr)); } .insights { grid-template-columns: 1fr; } .app-window { width: calc(100vw - 28px); height: calc(100vh - 28px); } }
+    </style>
+  </head>
+  <body>
+    <div class="desktop-shell">
+      <div class="desktop-bg"></div>
+      <div class="desktop-launcher">
+        <button class="app-launcher" id="openAppButton" aria-label="Abrir Aula">
+          <span class="app-icon"></span>
+          <span class="app-label">Aula</span>
+        </button>
+      </div>
+
+      <div class="window app-window" id="appWindow" role="dialog" aria-modal="true" aria-label="Aplicación Aula">
+        <div class="titlebar">
+          <div class="titlebar-left"><span class="window-dot blue"></span><span class="window-title">aula.</span></div>
+          <div class="titlebar-actions">
+            <button class="window-btn" data-action="minimize" aria-label="Minimizar">—</button>
+            <button class="window-btn close" data-action="close" aria-label="Cerrar">✕</button>
+          </div>
+        </div>
+
+        <div class="app-shell">
+          <aside class="sidebar">
+            <div class="brand"><div class="brand-badge"></div><span>aula.</span></div>
+            <div class="profile-box">
+              <div class="profile-avatar"></div>
+              <div>
+                <div class="profile-name">Escuela Juan Fernández</div>
+                <div class="profile-role">León</div>
+              </div>
+            </div>
+            <nav class="nav" aria-label="Menú principal">
+              <div class="nav-section">Gestión escolar</div>
+              <div class="nav-item active" data-section="Resumen general"><span class="icon"></span>Resumen general</div>
+              <div class="nav-item" data-section="Matricula"><span class="icon"></span>Matricula</div>
+              <div class="nav-item" data-section="Rendimiento"><span class="icon"></span>Rendimiento</div>
+              <div class="nav-item" data-section="Cursos"><span class="icon"></span>Cursos</div>
+              <div class="nav-item" data-section="Informes"><span class="icon"></span>Informes</div>
+              <div class="divider"></div>
+              <div class="nav-item" data-section="Configuración"><span class="icon"></span>Configuración</div>
+              <div class="nav-item" data-section="Centro de ayuda"><span class="icon"></span>Centro de ayuda</div>
+            </nav>
+            <div class="sidebar-foot"><div class="help-box"><div class="badge"></div><span>¿Cómo te podemos ayudar?</span></div></div>
+          </aside>
+
+          <main class="content">
+            <div class="topbar">
+              <div class="crumbs">
+                <div class="crumb"><span class="dot"></span><span>Juan Fernández de León</span></div>
+                <span class="separator">/</span>
+                <span id="currentSectionLabel">Resumen general</span>
+              </div>
+              <div class="header-actions">
+                <div class="pill"><span>📅</span><strong>Periodo</strong> 2025</div>
+                <button id="btnExport" class="btn">Exportar informe</button>
+              </div>
+            </div>
+
+            <div class="main">
+              <div class="page-header">
+                <div>
+                  <h1>Una mirada a tu escuela</h1>
+                  <p>Los avances de tu comunidad y dónde enfocar el acompañamiento.</p>
+                </div>
+              </div>
+
+              <div class="toolbar">
+                <label class="select-field">
+                  <span>Período</span>
+                  <select id="periodSelect" aria-label="Seleccionar periodo">
+                    <option>Septiembre 2026</option>
+                    <option>Agosto 2026</option>
+                    <option>Julio 2026</option>
+                  </select>
+                </label>
+                <label class="select-field">
+                  <span>Curso</span>
+                  <select id="courseFilter" aria-label="Seleccionar curso">
+                    <option value="all">Todos los cursos</option>
+                    <option value="1">1° de primaria</option>
+                    <option value="2">2° de primaria</option>
+                    <option value="3">3° de primaria</option>
+                    <option value="4">4° de primaria</option>
+                    <option value="5">5° de primaria</option>
+                    <option value="6">6° de primaria</option>
+                  </select>
+                </label>
+                <div class="spacer"></div>
+                <div class="select-field" aria-live="polite"><span id="statusStamp">Actualizado el 30 sep 2026 · 18:00</span></div>
+              </div>
+
+              <div class="stats-grid" id="statsGrid">
+                <div class="stat-card selected" data-metric="matriculados">
+                  <div class="stat-head"><span>Estudiantes matriculados</span><span class="mini-chip blue"></span></div>
+                  <div class="stat-wrap"><div class="number" id="stat-matriculados-value">684</div><div class="delta up" id="stat-matriculados-delta">+12 %</div></div>
+                  <div class="stat-foot"><span id="stat-matriculados-sub">+12 vs. agosto</span><span id="stat-matriculados-meta">3 cursos · 24 secciones</span></div>
+                </div>
+                <div class="stat-card" data-metric="aprovechamiento">
+                  <div class="stat-head"><span>Promedio de aprovechamiento</span><span class="mini-chip orange"></span></div>
+                  <div class="stat-wrap"><div class="number" id="stat-aprovechamiento-value">92,4</div><div class="delta up" id="stat-aprovechamiento-delta">%</div></div>
+                  <div class="stat-foot"><span id="stat-aprovechamiento-sub">+0,8 pp vs. agosto</span><span id="stat-aprovechamiento-meta">Meta: 95 %</span></div>
+                </div>
+                <div class="stat-card" data-metric="aprobacion">
+                  <div class="stat-head"><span>Porcentaje de aprobación</span><span class="mini-chip green"></span></div>
+                  <div class="stat-wrap"><div class="number" id="stat-aprobacion-value">86</div><div class="delta up" id="stat-aprobacion-delta">%</div></div>
+                  <div class="stat-foot"><span id="stat-aprobacion-sub">+2 pp vs. agosto</span><span id="stat-aprobacion-meta">Estudiantes con todas las asignaturas aprobadas</span></div>
+                </div>
+                <div class="stat-card" data-metric="atencion">
+                  <div class="stat-head"><span>Cursos que necesitan atención</span><span class="mini-chip red"></span></div>
+                  <div class="stat-wrap"><div class="number" id="stat-atencion-value">2</div><div class="delta down" id="stat-atencion-delta">/ 6</div></div>
+                  <div class="stat-foot"><span id="stat-atencion-sub">Próxima actuación</span><span id="stat-atencion-meta">5° y 6° de primaria</span></div>
+                </div>
+              </div>
+
+              <div class="notice" id="noticeBox">
+                <span class="icon"></span>
+                <span id="noticeText">5.9% y 6.7% están por debajo del umbral de aprobación académica. Revisa el detalle para planificar el apoyo.</span>
+              </div>
+
+              <div class="insights">
+                <div class="panel">
+                  <div class="panel-header"><div class="title">¿Cómo evoluciona la asistencia?</div><div class="tag">Ajustado</div></div>
+                  <div class="chart-box">
+                    <div class="chart-y"><span>100%</span><span>95%</span><span>90%</span><span>85%</span></div>
+                    <div style="flex:1;">
+                      <svg class="chart-svg" viewBox="0 0 600 200" preserveAspectRatio="none">
+                        <defs>
+                          <linearGradient id="areaFill" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0%" stop-color="#2d8ef5" stop-opacity="0.18"/>
+                            <stop offset="100%" stop-color="#2d8ef5" stop-opacity="0.02"/>
+                          </linearGradient>
+                        </defs>
+                        <g>
+                          <path d="M15 103 L110 97 L190 93 L270 95 L350 105 L420 100 L500 92 L570 90 L570 170 L15 170 Z" fill="url(#areaFill)"/>
+                          <path d="M15 103 L110 97 L190 93 L270 95 L350 105 L420 100 L500 92 L570 90" fill="none" stroke="#2a7fe6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        </g>
+                        <g>
+                          <line x1="15" y1="170" x2="570" y2="170" stroke="#dfe9f5" stroke-width="1"/>
+                          <line x1="15" y1="120" x2="570" y2="120" stroke="#dfe9f5" stroke-width="1"/>
+                          <line x1="15" y1="70" x2="570" y2="70" stroke="#dfe9f5" stroke-width="1"/>
+                        </g>
+                      </svg>
+                      <div class="chart-x"><span>Mar</span><span>Abr</span><span>May</span><span>Jun</span><span>Jul</span><span>Ago</span><span>Sep</span></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="panel bar-panel">
+                  <div class="panel-header"><div class="title">Rendimiento por curso</div><div class="tag">Estudiantes con todas las asignaturas aprobadas</div></div>
+                  <div class="bars">
+                    <div class="bar-row"><span>1°</span><div class="bar-track"><span class="blue-bar" style="width: 94%;"></span></div><strong>94%</strong></div>
+                    <div class="bar-row"><span>2°</span><div class="bar-track"><span class="blue-bar" style="width: 91%;"></span></div><strong>91%</strong></div>
+                    <div class="bar-row"><span>3°</span><div class="bar-track"><span class="blue-bar" style="width: 90%;"></span></div><strong>90%</strong></div>
+                    <div class="bar-row"><span>4°</span><div class="bar-track"><span class="amber-bar" style="width: 87%;"></span></div><strong>87%</strong></div>
+                    <div class="bar-row"><span>5°</span><div class="bar-track"><span class="amber-bar" style="width: 74%;"></span></div><strong>74%</strong></div>
+                    <div class="bar-row"><span>6°</span><div class="bar-track"><span class="amber-bar" style="width: 70%;"></span></div><strong>70%</strong></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <div class="table-head">
+                  <h3>El detalle de cada curso</h3>
+                  <div class="toggle-group">
+                    <span>Solo con alertas</span>
+                    <input id="alertToggle" class="alert-checkbox" type="checkbox" aria-label="Mostrar solo cursos con alertas" />
+                  </div>
+                </div>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Curso</th>
+                      <th>Matrícula</th>
+                      <th>Asistencia</th>
+                      <th>Promedio</th>
+                      <th>Aprobación</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody id="courseTableBody"></tbody>
+                </table>
+                <div class="table-foot">
+                  <div class="info"><span class="dot"></span><span id="tableSummary">Se estima que 2 cursos necesitan atención para el próximo ciclo.</span></div>
+                  <div class="value" id="tableTotal">Total: 684</div>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const courseData = [
+        { id: 1, name: '1° de primaria', matricula: 114, asistencia: '90,0%', promedio: 94, aprobacion: 94, alerta: false, progressClass: 'green' },
+        { id: 2, name: '2° de primaria', matricula: 114, asistencia: '95,0%', promedio: 91, aprobacion: 91, alerta: false, progressClass: 'green' },
+        { id: 3, name: '3° de primaria', matricula: 114, asistencia: '94,0%', promedio: 90, aprobacion: 90, alerta: false, progressClass: 'green' },
+        { id: 4, name: '4° de primaria', matricula: 114, asistencia: '93,6%', promedio: 87, aprobacion: 87, alerta: false, progressClass: 'orange' },
+        { id: 5, name: '5° de primaria', matricula: 114, asistencia: '90,0%', promedio: 80, aprobacion: 80, alerta: true, progressClass: 'orange' },
+        { id: 6, name: '6° de primaria', matricula: 114, asistencia: '86,0%', promedio: 74, aprobacion: 74, alerta: true, progressClass: 'red' }
+      ];
+      const notices = {
+        matriculados: 'El alumnado ha crecido un 12% respecto al mes pasado. Se mantienen los cursos clave con buen nivel de ocupación.',
+        aprovechamiento: 'El promedio general sigue subiendo; el foco está en mejorar la ejecución en 5° y 6° de primaria.',
+        aprobacion: 'La aprobación general se sostiene por encima del objetivo. Se sigue reforzando en los cursos con más riesgo.',
+        atencion: 'Se recomienda revisar 5° y 6° de primaria para cerrar la brecha en la aprobación antes del próximo informe.'
+      };
+      const sectionLabel = document.getElementById('currentSectionLabel');
+      const tableBody = document.getElementById('courseTableBody');
+      const tableSummary = document.getElementById('tableSummary');
+      const tableTotal = document.getElementById('tableTotal');
+      const courseFilter = document.getElementById('courseFilter');
+      const alertToggle = document.getElementById('alertToggle');
+      const noticeText = document.getElementById('noticeText');
+      const periodSelect = document.getElementById('periodSelect');
+      const statusStamp = document.getElementById('statusStamp');
+      const navItems = document.querySelectorAll('.nav-item');
+      const statCards = document.querySelectorAll('.stat-card');
+      const appWindow = document.getElementById('appWindow');
+      const openAppButton = document.getElementById('openAppButton');
+      let selectedMetric = 'matriculados';
+      let selectedCourseId = 1;
+      function toggleWindow(show) {
+        appWindow.style.display = show ? 'flex' : 'none';
+        openAppButton.style.opacity = show ? '0' : '1';
+        openAppButton.style.pointerEvents = show ? 'none' : 'auto';
+      }
+      function updateSectionTitle(section) { sectionLabel.textContent = section; }
+      function updateSelectedMetric(metric) {
+        selectedMetric = metric;
+        statCards.forEach((card) => { const active = card.dataset.metric === metric; card.classList.toggle('selected', active); });
+        noticeText.textContent = notices[metric];
+      }
+      function getVisibleCourses() {
+        const selectedValue = courseFilter.value;
+        const all = selectedValue === 'all';
+        return courseData.filter((course) => {
+          const matchesCourse = all || Number(selectedValue) === course.id;
+          const matchesAlert = !alertToggle.checked || course.alerta;
+          return matchesCourse && matchesAlert;
+        });
+      }
+      function renderTable() {
+        const visibleCourses = getVisibleCourses();
+        const fallbackSelected = visibleCourses.some((course) => course.id === selectedCourseId) ? selectedCourseId : visibleCourses[0]?.id ?? null;
+        if (fallbackSelected !== null) selectedCourseId = fallbackSelected;
+        if (!visibleCourses.length) {
+          tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#6d7f9a; padding:24px;">No hay cursos que coincidan con los filtros actuales.</td></tr>';
+          tableTotal.textContent = 'Total: 0';
+          tableSummary.textContent = 'No hay cursos con alertas para este filtro.';
+          return;
+        }
+        tableBody.innerHTML = visibleCourses.map((course) => {
+          const isSelected = course.id === selectedCourseId;
+          const statusClass = course.alerta ? 'warning' : 'safe';
+          const statusLabel = course.alerta ? 'Necesita atención' : 'Sin alertas';
+          return `
+            <tr class="course-row ${isSelected ? 'selected' : ''}" data-course-id="${course.id}" tabindex="0">
+              <td class="course-name">${course.name}</td>
+              <td>${course.matricula}</td>
+              <td>${course.asistencia}</td>
+              <td><div class="progress ${course.progressClass}"><span style="width: ${course.promedio}%;"></span></div></td>
+              <td>${course.aprobacion} %</td>
+              <td><span class="status-pill ${statusClass}">${statusLabel}</span></td>
+            </tr>
+          `;
+        }).join('');
+        const totalStudents = visibleCourses.reduce((sum, course) => sum + course.matricula, 0);
+        const alertsCount = visibleCourses.filter((course) => course.alerta).length;
+        tableTotal.textContent = `Total: ${totalStudents}`;
+        tableSummary.textContent = alertsCount > 0 ? `Se estima que ${alertsCount} curso${alertsCount > 1 ? 's' : ''} necesitan atención para el próximo ciclo.` : 'Todos los cursos cumplen con el umbral requerido este periodo.';
+        document.querySelectorAll('.course-row').forEach((row) => {
+          row.addEventListener('click', () => { selectedCourseId = Number(row.dataset.courseId); renderTable(); });
+          row.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectedCourseId = Number(row.dataset.courseId); renderTable(); } });
+        });
+      }
+      navItems.forEach((navItem) => {
+        navItem.addEventListener('click', () => {
+          navItems.forEach((item) => item.classList.toggle('active', item === navItem));
+          updateSectionTitle(navItem.dataset.section);
+        });
+      });
+      statCards.forEach((card) => { card.addEventListener('click', () => updateSelectedMetric(card.dataset.metric)); });
+      courseFilter.addEventListener('change', renderTable);
+      alertToggle.addEventListener('change', renderTable);
+      periodSelect.addEventListener('change', (event) => { statusStamp.textContent = `Actualizado el ${event.target.value} · 18:00`; });
+      document.getElementById('btnExport').addEventListener('click', () => {
+        const payload = {
+          periodo: periodSelect.value,
+          curso: courseFilter.value === 'all' ? 'Todos' : courseFilter.options[courseFilter.selectedIndex].text,
+          filtroAlertas: alertToggle.checked,
+          seccionActiva: sectionLabel.textContent,
+          cursos: getVisibleCourses()
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'informe-aula.json';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      });
+      document.querySelectorAll('.window-btn').forEach((button) => {
+        button.addEventListener('click', () => {
+          const action = button.dataset.action;
+          if (action === 'close') toggleWindow(false);
+          if (action === 'minimize') { appWindow.style.display = 'none'; openAppButton.style.opacity = '1'; openAppButton.style.pointerEvents = 'auto'; }
+        });
+      });
+      openAppButton.addEventListener('click', () => toggleWindow(true));
+      renderTable();
+      updateSectionTitle('Resumen general');
+      updateSelectedMetric('matriculados');
+      toggleWindow(true);
+    </script>
+  </body>
+</html>
